@@ -1,0 +1,3 @@
+	<ActorFrame Name="T-Star"><children>
+		<Layer File="t-pose" />
+	</children></ActorFrame>
