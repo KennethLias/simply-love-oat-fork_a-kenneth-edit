@@ -79,6 +79,7 @@ ScreenSelectMusicHeaderTexts = {
   'the j',
   'why can\'t eggs have love',
   'yop',
+  'https://important.kennethlias.com',
 }
 function ScreenSelectMusicHeaderTextSet(self)
   local t = ScreenSelectMusicHeaderTexts[math.random(1, #ScreenSelectMusicHeaderTexts)]
@@ -209,6 +210,7 @@ ScreenTitleMenuTexts = { -- see Graphics/ScreenTitleMenu scroll choice1.xml
   'obama\'s... last name........... is........\n.....................................................................................joe',
   'LOADING?\nLOAFING??',
   'not enough memory \not enough memory  ',
+  'https://important.kennethlias.com',
 }
 
 function ScreenTitleMenuTextSet(self)
