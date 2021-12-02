@@ -15,6 +15,15 @@ OatProfile().OATDisplayFriends = OatProfile().OATDisplayFriends == nil and true 
 OatProfile().OATFailGifs = OatProfile().OATFailGifs == nil and true or OatProfile().OATFailGifs
 OatProfile().OATBackgroundShader = OatProfile().OATBackgroundShader or 2
 OatProfile().OATRichPresence = OatProfile().OATRichPresence == nil and true or OatProfile().OATRichPresence
+OatProfile().OATResultsAlpha = OatProfile().OATResultsAlpha or 2 -- floating point
+OatProfile().OATShowHeaders = OatProfile().OATShowHeaders == nil and true or OatProfile().OATShowHeaders
+OatProfile().OATShowPlaytime = OatProfile().OATShowPlaytime == nil and true or OatProfile().OATShowPlaytime
+OatProfile().OATShowTotalPlaytime = OatProfile().OATShowTotalPlaytime == nil and true or OatProfile().OATShowTotalPlaytime
+OatProfile().OATAggressiveRichPresence = OatProfile().OATAggressiveRichPresence == nil and false or OatProfile().OATAggressiveRichPresence
+OatProfile().OATBackgroundBrightness = OatProfile().OATBackgroundBrightness or 5 -- floating point
+
+OatProfile().OATTotalPlayedSongs = OatProfile().OATTotalPlayedSongs or 0
+OatProfile().OATTotalPlayedFor = OatProfile().OATTotalPlayedFor or 0
 
 function OptionSaveEverything()
   PROFILEMAN:SaveMachineProfile()
@@ -22,6 +31,10 @@ end
 
 local function resetHeader()
   ScreenThemeOptionsHeader:settext('THEME OPTIONS')
+  ScreenThemeOptionsHeaderTop:hidden(OatProfile().OATShowHeaders and 0 or 1)
+  ScreenThemeOptionsHeader:hidden(OatProfile().OATShowHeaders and 0 or 1)
+  SCREENMAN(10):hidden(OatProfile().OATShowHeaders and 0 or 1)
+  ResultsAlphaPreview:hidden(1)
 end
 local function resetBackground()
   SCREENMAN:GetTopScreen()(1)(2):diffusealpha(1)
@@ -86,7 +99,7 @@ end
 function OptionBackgroundShader()
   local t = OptionRowBase('BackgroundShader')
 	t.OneChoiceForAllPlayers = true
-	t.Choices = {'Random', 'earthbound.frag', 'plasma.frag', 'topologica.frag', 'theyaremanycolors.frag', 'descent.frag', 'rez_dubstepmyass.frag', 'rez_mynameisjulia.frag', 'rez_roadtohell.frag', 'rez_structures.frag', 'rez_thedescent.frag'}
+	t.Choices = {'Random', 'earthbound.frag', 'plasma.frag', 'topologica.frag', 'theyaremanycolors.frag', 'descent.frag', 'rez_dubstepmyass.frag', 'rez_mynameisjulia.frag', 'rez_roadtohell.frag', 'rez_structures.frag', 'rez_thedescent.frag', 'solid color'}
     t.LoadSelections = function(self, list) if OatProfile().OATBackgroundShader then list[OatProfile().OATBackgroundShader] = true else list[1] = true end end
 	t.SaveSelections = function(self, list)
 		if list[1] then OatProfile().OATBackgroundShader = 1 end
@@ -100,6 +113,7 @@ function OptionBackgroundShader()
 		if list[9] then OatProfile().OATBackgroundShader = 9 end
 		if list[10] then OatProfile().OATBackgroundShader = 10 end
 		if list[11] then OatProfile().OATBackgroundShader = 11 end
+		if list[12] then OatProfile().OATBackgroundShader = 12 end
     MESSAGEMAN:Broadcast('UpdateBackgroundShader')
 
     SCREENMAN:GetTopScreen()(1)(2):diffusealpha(0.3)
@@ -120,6 +134,135 @@ function OptionRichPresence()
 	t.SaveSelections = function(self, list)
 		if list[1] then OatProfile().OATRichPresence = true  end
 		if list[2] then OatProfile().OATRichPresence = false end
+    resetHeader()
+    resetBackground()
+	end
+  return t
+end
+
+function OptionResultsAlpha()
+  local t = OptionRowBase('ResultsAlpha')
+
+  t.OneChoiceForAllPlayers = true
+
+	local Names = {}
+  for i = 0, 1, 0.1 do table.insert(Names, i) end
+
+  t.Choices = Names
+	t.LoadSelections = function(self, list)
+    local a = OatProfile().OATResultsAlpha
+		for i,v in ipairs(Names) do
+			if tostring(a / 10) == tostring(v) then list[i] = true return end
+		end
+
+		list[#list] = true;	-- default to 1
+	end
+
+	t.SaveSelections = function(self, list)
+		for i,v in ipairs(Names) do
+			if list[i] then
+        OatProfile().OATResultsAlpha = v * 10
+      end
+		end
+    resetHeader()
+    resetBackground()
+    ResultsAlphaPreview:hidden(0)
+    for i,v in ipairs(ResultsAlphaPreview:GetChildren()) do
+      v:queuecommand('Update')
+    end
+    SCREENMAN:GetTopScreen()(1)(2):diffusealpha(0)
+	end
+
+  t.LayoutType = 'ShowOneInRow'
+
+	return t
+end
+
+function OptionBackgroundBrightness()
+  local t = OptionRowBase('BackgroundBrightness')
+
+  t.OneChoiceForAllPlayers = true
+
+	local Names = {}
+  for i = 0, 1, 0.1 do table.insert(Names, i) end
+
+  t.Choices = Names
+	t.LoadSelections = function(self, list)
+    local a = OatProfile().OATBackgroundBrightness
+		for i,v in ipairs(Names) do
+			if tostring(a / 10) == tostring(v) then list[i] = true return end
+		end
+
+		list[#list] = true;	-- default to 1
+	end
+
+	t.SaveSelections = function(self, list)
+		for i,v in ipairs(Names) do
+			if list[i] then
+        OatProfile().OATBackgroundBrightness = v * 10
+      end
+		end
+    resetHeader()
+    resetBackground()
+    MESSAGEMAN:Broadcast('UpdateBackgroundShader')
+    SCREENMAN:GetTopScreen()(1)(2):diffusealpha(0.3)
+	end
+
+  t.LayoutType = 'ShowOneInRow'
+
+	return t
+end
+
+function OptionShowHeaders()
+  local t = OptionRowBase('ShowHeaders')
+	t.OneChoiceForAllPlayers = true
+	t.Choices = {'On', 'Off'}
+  t.LoadSelections = function(self, list) if OatProfile().OATShowHeaders then list[1] = true else list[2] = true end end
+	t.SaveSelections = function(self, list)
+		if list[1] then OatProfile().OATShowHeaders = true  end
+		if list[2] then OatProfile().OATShowHeaders = false end
+    resetHeader()
+    resetBackground()
+	end
+  return t
+end
+
+function OptionShowPlaytime()
+  local t = OptionRowBase('ShowPlaytime')
+	t.OneChoiceForAllPlayers = true
+	t.Choices = {'On', 'Off'}
+  t.LoadSelections = function(self, list) if OatProfile().OATShowPlaytime then list[1] = true else list[2] = true end end
+	t.SaveSelections = function(self, list)
+		if list[1] then OatProfile().OATShowPlaytime = true  end
+		if list[2] then OatProfile().OATShowPlaytime = false end
+    resetHeader()
+    resetBackground()
+	end
+  return t
+end
+
+function OptionShowTotalPlaytime()
+  local t = OptionRowBase('ShowTotalPlaytime')
+	t.OneChoiceForAllPlayers = true
+	t.Choices = {'On', 'Off'}
+  t.LoadSelections = function(self, list) if OatProfile().OATShowTotalPlaytime then list[1] = true else list[2] = true end end
+	t.SaveSelections = function(self, list)
+		if list[1] then OatProfile().OATShowTotalPlaytime = true  end
+		if list[2] then OatProfile().OATShowTotalPlaytime = false end
+    resetHeader()
+    resetBackground()
+	end
+  return t
+end
+
+function OptionAggressiveRichPresence()
+  local t = OptionRowBase('AggressiveRichPresence')
+	t.OneChoiceForAllPlayers = true
+	t.Choices = {'On', 'Off'}
+  t.LoadSelections = function(self, list) if OatProfile().OATAggressiveRichPresence then list[1] = true else list[2] = true end end
+	t.SaveSelections = function(self, list)
+		if list[1] then OatProfile().OATAggressiveRichPresence = true  end
+		if list[2] then OatProfile().OATAggressiveRichPresence = false end
     resetHeader()
     resetBackground()
 	end

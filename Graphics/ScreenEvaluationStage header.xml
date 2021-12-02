@@ -4,31 +4,37 @@
 		Type="BitmapText"
 		Text=""
 		File="_wendy white"
-		InitCommand="%function(self) ScreenEvaluationStageHeaderTextSet(self) end"
 		OnCommand="diffuse,#FFFFFF;zoom,.4;shadowlength,1;horizalign,left;x,15;y,16;texturefiltering,false"
 		OffCommand="linear,0.2;diffusealpha,0"
+		InitCommand="%function(self) ScreenEvaluationStageHeaderTextSet(self); if not OatProfile().OATShowHeaders then self:hidden(1) end end"
 	/>
 	<Layer
 		Type="BitmapText"
 		Text=""
 		File="_wendy white"
+		OnCommand="diffusealpha,0;linear,0.2;diffusealpha,1;queuecommand,UpdateCounter"
+		OffCommand="stoptweening;linear,0.2;diffusealpha,0"
 		InitCommand="%function(self)
 		    --self:stoptweening();
-		   	self:diffuse(0.8, 0.8, 0.8, 1)
+		   	self:diffuse(0.8, 0.8, 0.8, 0)
 			self:zoom(.2)
 			self:shadowlength(0)
 			self:horizalign('right')
 			self:x(SCREEN_WIDTH)
-			self:y(26)
+			if OatProfile().OATShowPlaytime and OatProfile().OATShowTotalPlaytime then
+			  self:y(19)
+			else
+			  self:y(26)
+			end
 			self:texturefiltering(false)
 			
 			if gnSongCount == nil then
 				gnSongCount = 0;
 		    end
 		    gnSongCount = gnSongCount + 1;
+		    OatProfile().OATTotalPlayedSongs = (OatProfile().OATTotalPlayedSongs or 0) + 1
+		    PROFILEMAN:SaveMachineProfile()
 		    
-		    self:sleep(0);
-			self:queuecommand('UpdateCounter');
 		end"
 		UpdateCounterCommand="%function(self)
 		--self:stoptweening();
@@ -37,7 +43,18 @@
 		if gnPlayMin  == nil then gnPlayMin  = 0 end
 		if gnPlayHour == nil then gnPlayHour = 0 end
 		
+		local function formatTime(t)
+		  local d = math.floor(t / 60 / 60 / 24)
+		  local h = math.floor((t / 60 / 60) % 24)
+		  local m = math.floor((t / 60) % 60)
+		  local s = t % 60
+		  return (d < 10 and '0' .. d or d) .. ':' .. (h < 10 and '0' .. h or h) .. ':' .. (m < 10 and '0' .. m or m) .. ':' .. (s < 10 and '0' .. s or s)
+		end
+		
 		gnPlaySec = gnPlaySec + 1;
+		OatProfile().OATTotalPlayedFor = (OatProfile().OATTotalPlayedFor or 0) + 1
+		local t = OatProfile().OATTotalPlayedFor or 0
+		local s = OatProfile().OATTotalPlayedSongs or 0
 		if gnPlaySec >= 60 then
 			gnPlaySec = gnPlaySec - 60;
 			gnPlayMin = gnPlayMin + 1;
@@ -66,12 +83,22 @@
 		if gnSongCount == nil then
 			gnSongCount = 0;
 			end
+			
+		local lines = {}
 		
-		if gnSongCount == 1 then
-		    self:settext('playtime: ' .. gnPlayHourText..':'..gnPlayMinText..':'..gnPlaySecText .. ' ('..gnSongCount..' Song)');
-			else
-		    self:settext('playtime: ' .. gnPlayHourText..':'..gnPlayMinText..':'..gnPlaySecText .. ' ('..gnSongCount..' Songs)');
-			end
+		if OatProfile().OATShowPlaytime then
+		    if gnSongCount == 1 then
+		        table.insert(lines, 'playtime: ' .. gnPlayHourText..':'..gnPlayMinText..':'..gnPlaySecText .. ' ('..gnSongCount..' Song)')
+		    else
+		        table.insert(lines, 'playtime: ' .. gnPlayHourText..':'..gnPlayMinText..':'..gnPlaySecText .. ' ('..gnSongCount..' Songs)')
+		    end
+		end
+			
+		if OatProfile().OATShowTotalPlaytime then
+		    table.insert(lines, 'total playtime: ' .. formatTime(t) .. ' (' .. s .. ' Songs)')
+		end
+		
+		self:settext(table.concat(lines, '\n'))
 
 		self:sleep(1);
 		self:queuecommand('UpdateCounter');
